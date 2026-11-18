@@ -1,0 +1,27 @@
+name: Bug report
+description: Something does not work as documented
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Never paste tokens, personal access tokens, signing secrets or other credentials. Replace them with `<redacted>`.
+  - type: input
+    id: connector
+    attributes:
+      label: Connector
+      placeholder: airtable
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Commands you ran, the HTTP status and response body, and relevant Vercel function logs (redacted).
+    validations:
+      required: true

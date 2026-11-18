@@ -1,0 +1,62 @@
+# Payload format
+
+`POST /api/webhook` takes what the [Screenshot to Webhook - Annotate & Send](https://chromewebstore.google.com/detail/screenshot-to-webhook-ann/jpdgfdnielfhckdenioikfnkjmonmjon) extension sends. Any other tool, script or cURL call can send the same shape.
+
+## Request
+
+- `Authorization: Bearer <token>`: a token from `npm run provision`.
+- `Content-Type: application/json` or `multipart/form-data`. Anything else gets 400.
+- Body limit: Vercel caps request bodies at 4.5 MB. The JSON format sends the image twice (`image` and `imageBase64`), so screenshots larger than about 1.6 MB are rejected. Multipart costs less.
+
+## Fields
+
+Every key is optional. Keys the gateway does not know are ignored.
+
+| Key | Type | Meaning |
+| --- | --- | --- |
+| `note` | string | The reporter's feedback. Its first line becomes the ticket summary. |
+| `pins` | array | Annotation pins as the extension records them, stored as JSON text. |
+| `pinsText` | string | The pins as readable text, such as `1. misaligned`. |
+| `pinCount` | number | Number of pins. |
+| `pageUrl` | string | The page the screenshot was taken on. |
+| `pageTitle` | string | Its title. Used as the summary when `note` is empty. |
+| `capturedAt` | string | ISO 8601 time of the capture. |
+| `browser`, `os`, `screen`, `viewport` | string | Environment details. |
+| `tag` | string | The tag picked in the extension's editor. `null`, an empty value or a missing key all mean "no tag". It is cut to one line of 100 characters. |
+| `reporter` | string | Who reported it. See the header below. |
+
+## Image
+
+Send one screenshot in any of these ways. The first one present wins.
+
+- JSON `imageBase64` (raw base64), with optional `imageMimeType` (default `image/png`) and `imageFileName`.
+- JSON `image` as a data URL: `data:image/png;base64,...`.
+- Multipart: a file part named `image`.
+
+Image keys are never stored as text fields.
+
+## Reporter header
+
+The extension lets users add custom headers. A header named `reporter` fills `reporter` when the body does not set it. The name is matched on letters only and forgives one typo, so `Reporter`, `reported-by`, `Reported_By` and `repoter` all work. The value is cut to one line of 100 characters.
+
+## Responses
+
+| Status | Body |
+| --- | --- |
+| 200 | `{ "ok": true, "id": "<record id>" }`, plus `"skipped": [<field names>]` when the destination refused some fields |
+| 400 | Malformed body or unsupported Content-Type |
+| 401 | Missing, invalid or revoked token |
+| 500 | The gateway or the token's connector is missing env vars |
+| 502 | The destination refused the report. `id` is included when part of it was saved |
+
+A report never fails over its content. Each value is fitted to its column, and a field the destination refuses is skipped and listed in `skipped`.
+
+## Example
+
+```sh
+curl -X POST 'https://your-project.vercel.app/api/webhook' \
+  -H 'Authorization: Bearer <token>' \
+  -H 'Content-Type: application/json' \
+  -H 'reporter: Dana' \
+  -d '{"note":"Button overlaps the footer\nOnly on mobile","pageUrl":"https://example.com/settings","pageTitle":"Settings","tag":"Bug"}'
+```

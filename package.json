@@ -1,0 +1,28 @@
+{
+  "name": "screenshot-to-webhook-gateway",
+  "private": true,
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Meged-Solutions/screenshot-to-webhook-gateway.git"
+  },
+  "type": "module",
+  "engines": {
+    "node": "24.x"
+  },
+  "scripts": {
+    "dev": "vercel dev",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "sync-vercel-env": "tsx --env-file-if-exists=.env.local scripts/sync-vercel-env.ts",
+    "provision": "tsx --env-file-if-exists=.env.local scripts/provision.ts",
+    "setup": "tsx scripts/setup.ts",
+    "check:hygiene": "tsx scripts/check-hygiene.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.4",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.3"
+  }
+}

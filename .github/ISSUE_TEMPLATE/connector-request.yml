@@ -1,0 +1,29 @@
+name: Connector request
+description: Ask for a new destination, or tell us you are building one
+labels: [connector]
+body:
+  - type: input
+    id: destination
+    attributes:
+      label: Destination
+      description: The service reports should go to, such as Notion, Google Sheets, Linear, Slack or Supabase.
+    validations:
+      required: true
+  - type: textarea
+    id: use
+    attributes:
+      label: How would you use it?
+      description: What should a report become there (a row, a page, an issue, a message), and which fields matter?
+    validations:
+      required: true
+  - type: textarea
+    id: api
+    attributes:
+      label: API notes
+      description: Links to the API docs, how authentication works, and how a destination is identified (its id).
+  - type: checkboxes
+    id: building
+    attributes:
+      label: Contributing
+      options:
+        - label: I would like to build this connector myself (see CONTRIBUTING.md)

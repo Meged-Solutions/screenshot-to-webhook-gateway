@@ -1,0 +1,27 @@
+# dependencies
+node_modules/
+
+# env files (secrets); only the template is tracked
+.env*
+!.env.example
+
+# vercel
+.vercel/
+
+# build and test output
+coverage/
+*.tsbuildinfo
+
+# logs
+*.log
+npm-debug.log*
+
+# OS and editor
+.DS_Store
+.idea/
+.vscode/
+
+# local agent state (skills under .claude/skills are tracked)
+.claude/settings.local.json
+.claude/worktrees/
+.superpowers/
