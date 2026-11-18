@@ -3,8 +3,11 @@ import type { Image } from '../lib/payload.js'
 /** One report from the extension, parsed from JSON or multipart (see docs/payload.md). */
 export type Report = { fields: Record<string, unknown>; image?: Image }
 
-/** An env var a connector reads. `gateway` vars go to Vercel; `provision` vars stay in .env.local. */
-export type EnvVar = { name: string; sensitive: boolean; description: string; scope: 'gateway' | 'provision' }
+/**
+ * An env var a connector reads. `gateway` vars go to Vercel; `provision` vars
+ * stay in .env.local. `optional` vars may be left empty without breaking delivery.
+ */
+export type EnvVar = { name: string; sensitive: boolean; description: string; scope: 'gateway' | 'provision'; optional?: boolean }
 
 /** A delivered report: the id the destination gave it, and payload fields it refused. */
 export type Delivered = { id: string; skipped: string[] }
