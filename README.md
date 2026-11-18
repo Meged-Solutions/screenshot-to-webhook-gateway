@@ -3,13 +3,13 @@
 Your own backend for the free [Screenshot to Webhook - Annotate & Send](https://chromewebstore.google.com/detail/screenshot-to-webhook-ann/jpdgfdnielfhckdenioikfnkjmonmjon) Chrome extension. Reporters annotate a screenshot and send it, and the gateway turns each report into a ticket in a tool you choose.
 
 ```
-extension  ──POST + Bearer token──▶  gateway (Vercel)  ──▶  connector  ──▶  Airtable, or yours
+extension  ──POST + Bearer token──▶  gateway (Vercel)  ──▶  connector  ──▶  Airtable, GitHub, n8n, Make, Zapier, or yours
 ```
 
 ![The extension's editor: arrows, ellipses, numbered pins and a note, sent with one click](docs/images/extension-annotate.png)
 
 - **One deployment, many destinations.** Each destination (an Airtable base per client, for example) gets its own signed token. A token can't be edited to reach another destination, and you can revoke any token on its own.
-- **Connectors.** Airtable is built in. Add more by implementing one small interface: [contributions welcome](#contribute-a-connector).
+- **Connectors.** Airtable, GitHub Issues, n8n, Make and Zapier are built in. With n8n, Make or Zapier a report can reach thousands of other apps. Add more by implementing one small interface: [contributions welcome](#contribute-a-connector).
 - **No database and no UI.** Just a Vercel function and your own accounts.
 - **Built to set up with an AI agent.** Open it in Claude Code or Codex and say "set this up".
 
@@ -24,13 +24,13 @@ Open the folder in Claude Code or Codex and ask it to **set this up**. The agent
 
 ## Deploy with Vercel
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FMeged-Solutions%2Fscreenshot-to-webhook-gateway&env=WEBHOOK_SIGNING_SECRET,AIRTABLE_PAT&envDescription=A%20random%20secret%20of%2032%2B%20characters%20and%20an%20Airtable%20token%20with%20data.records%3Aread%20and%20data.records%3Awrite&envLink=https%3A%2F%2Fgithub.com%2FMeged-Solutions%2Fscreenshot-to-webhook-gateway%23manual-setup)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FMeged-Solutions%2Fscreenshot-to-webhook-gateway&env=WEBHOOK_SIGNING_SECRET&envDescription=A%20random%20secret%20of%2032%2B%20characters.%20Add%20the%20env%20vars%20of%20the%20connectors%20you%20use%20afterwards&envLink=https%3A%2F%2Fgithub.com%2FMeged-Solutions%2Fscreenshot-to-webhook-gateway%23manual-setup)
 
 The button copies the repo into your GitHub account and deploys it. Generate the secret with `openssl rand -hex 32`. Then clone your copy, run `cp .env.example .env.local`, and paste the same secret into `.env.local` before you run `npm run setup`. Tokens are signed locally and verified on Vercel, so both must hold the same secret, or every token is refused with 401.
 
 ## Manual setup
 
-You need Node 24, a [Vercel](https://vercel.com) account (the free plan is enough) and an [Airtable](https://airtable.com) account.
+You need Node 24 and a [Vercel](https://vercel.com) account (the free plan is enough). These steps use Airtable. For GitHub, n8n, Make or Zapier, replace step 2 with the setup in that [connector's README](#connectors) and pass its `--name` or `--ref` in step 4.
 
 1. **Install and check:**
    ```sh
@@ -90,9 +90,15 @@ Limits: Vercel caps request bodies at 4.5 MB (screenshots up to about 1.6 MB wit
 
 ## Connectors
 
+Each connector's README has its setup steps. The n8n, Make and Zapier connectors all forward the same JSON document (the report fields plus the screenshot as base64), described in [docs/payload.md](docs/payload.md#forwarded-payload), so a workflow built for one works for the others.
+
 | Connector | Destination | Provisioning |
 | --- | --- | --- |
-| [`airtable`](connectors/airtable) | A Tickets table in one base per destination | Creates and upgrades bases |
+| [`airtable`](connectors/airtable) | A Tickets table in one base per destination, with the screenshot attached | Creates and upgrades bases |
+| [`github`](connectors/github) | An issue in one repository per destination (no screenshot: GitHub's API cannot attach images) | Looks up an existing repository by owner/repo, never creates one |
+| [`n8n`](connectors/n8n) | A Webhook node (production URL) in a published workflow on your own n8n instance | None: create the workflow, then `--ref <webhook path>` |
+| [`make`](connectors/make) | A Make scenario's Custom webhook | None: build the scenario, then `--ref <zone>_<token>` |
+| [`zapier`](connectors/zapier) | A Zapier Catch Hook (Webhooks by Zapier) | None: create the Zap, then `--ref <accountId>_<hookId>` |
 | *yours?* | Notion, Google Sheets, Linear, Jira, Slack, Supabase... | [Contribute one](#contribute-a-connector) |
 
 ## Contribute a connector

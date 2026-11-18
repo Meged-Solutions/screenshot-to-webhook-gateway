@@ -1,6 +1,6 @@
 ---
 name: setup
-description: Use when the user wants to set up, install, deploy or configure this gateway, connect the Screenshot to Webhook - Annotate & Send extension, or create their first Airtable base and token.
+description: Use when the user wants to set up, install, deploy or configure this gateway, connect the Screenshot to Webhook - Annotate & Send extension, or create their first destination (Airtable base, GitHub repository, n8n, Make or Zapier webhook) and token.
 ---
 
 # Set up the gateway
@@ -18,9 +18,11 @@ npm run setup
 
 `npm run setup` needs Node 24. It creates `.env.local` from `.env.example`, generates `WEBHOOK_SIGNING_SECRET`, and lists every var as set, missing or optional without showing values. Re-run it after each step below to confirm progress.
 
-## 2. Airtable tokens
+## 2. Pick a connector and set its credentials
 
-Ask the user to:
+Ask where reports should go, and follow that connector's README for its credentials and destination: `connectors/airtable`, `connectors/github`, `connectors/n8n`, `connectors/make` or `connectors/zapier`. n8n, Make and Zapier can relay reports to most other apps. Make and Zapier need no env vars at all; GitHub needs `GITHUB_TOKEN`; n8n needs `N8N_BASE_URL`. The user types every value into `.env.local`, and `npm run setup` shows each connector as ready, incomplete or unused.
+
+For Airtable, ask the user to:
 
 1. Create (or pick) an Airtable workspace for feedback bases.
 2. Open https://airtable.com/create/tokens and create two tokens, both with access limited to that workspace:
@@ -28,7 +30,7 @@ Ask the user to:
    - `AIRTABLE_PROVISION_PAT`: scopes `schema.bases:read` and `schema.bases:write`. Local only, it creates bases.
 3. Paste both into `.env.local`, and set `AIRTABLE_WORKSPACE_ID` to the `wsp...` id from the workspace URL.
 
-Run `npm run setup` and confirm all three show `set`.
+Run `npm run setup` and confirm the connector shows `ready`.
 
 ## 3. Deploy to Vercel
 
@@ -36,7 +38,7 @@ Check that the Vercel CLI is installed (`vercel --version`); if not, `npm i -g v
 
 ```sh
 vercel link              # the user picks or creates the project
-npm run sync-vercel-env  # pushes WEBHOOK_SIGNING_SECRET, REVOKED_TOKEN_IDS and AIRTABLE_PAT only
+npm run sync-vercel-env  # pushes only gateway vars (never provisioning tokens)
 vercel deploy --prod
 ```
 
@@ -57,16 +59,18 @@ curl -s -X POST 'https://<project>.vercel.app/api/webhook' -H 'Content-Type: app
 Ask for a name (a client, a product or "Internal"). The command prints the bearer token, so the **user runs it in their own terminal window**, not through you (and not with Claude Code's `!` prefix, which copies output into the chat). That keeps the token out of the AI session:
 
 ```sh
-npm run provision -- --connector airtable --name "<name>"
+npm run provision -- --connector airtable --name "<name>"          # creates an Airtable base
+npm run provision -- --connector github --name "<owner>/<repo>"    # an existing GitHub repository
+npm run provision -- --connector <n8n|make|zapier> --ref <id>      # the webhook id, see the connector's README
 ```
 
-It creates the "<name> - Feedback" base and prints the webhook URL and the token, once. The user copies both into the extension. Ask them to tell you only that it worked, or the error message, never the token.
+It prints the webhook URL and the token, once. The user copies both into the extension. Ask them to tell you only that it worked, or the error message, never the token.
 
 ## 5. Connect the extension
 
 The user installs [Screenshot to Webhook - Annotate & Send](https://chromewebstore.google.com/detail/screenshot-to-webhook-ann/jpdgfdnielfhckdenioikfnkjmonmjon). In its settings they set the webhook URL, choose auth type **Bearer**, and paste the token. Optionally they add a custom header `reporter` with their name.
 
-They send a test screenshot, and a ticket should appear in the base's Tickets table. If it doesn't, ask for the HTTP status the extension shows and check `vercel logs`. 401 means a wrong or revoked token, a different signing secret in `.env.local` than on Vercel, or a URL behind Deployment Protection; 502 means Airtable refused the report (check that `AIRTABLE_PAT` covers the workspace).
+They send a test screenshot, and it should arrive at the destination (a record, an issue, or a workflow run). If it doesn't, ask for the HTTP status the extension shows and check `vercel logs`. 401 means a wrong or revoked token, a different signing secret in `.env.local` than on Vercel, or a URL behind Deployment Protection; 502 means the destination refused the report (check the connector's credentials and, for n8n, Make and Zapier, that the workflow is on).
 
 ## Done
 

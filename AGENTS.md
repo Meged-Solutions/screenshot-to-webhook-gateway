@@ -8,11 +8,11 @@ A webhook gateway on Vercel for the "Screenshot to Webhook - Annotate & Send" Ch
 
 ```
 api/webhook.ts          the only endpoint
-lib/                    token, payload parsing, config
+lib/                    token, payload parsing, config, forward (shared by webhook connectors)
 connectors/types.ts     the Connector interface
 connectors/index.ts     registry of connectors
 connectors/contract.ts  rules every connector must pass
-connectors/<id>/        one connector (airtable is built in, _template is a copy-me)
+connectors/<id>/        one connector (airtable, github, n8n, make, zapier; _template is a copy-me)
 scripts/                setup, provision, sync-vercel-env, check-hygiene
 docs/payload.md         the request format
 ```

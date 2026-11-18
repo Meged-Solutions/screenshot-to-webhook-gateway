@@ -60,3 +60,18 @@ curl -X POST 'https://your-project.vercel.app/api/webhook' \
   -H 'reporter: Dana' \
   -d '{"note":"Button overlaps the footer\nOnly on mobile","pageUrl":"https://example.com/settings","pageTitle":"Settings","tag":"Bug"}'
 ```
+
+## Forwarded payload
+
+The n8n, Make and Zapier connectors forward each report to your workflow as this JSON document, with the delivery id also in the `X-Delivery-Id` header:
+
+```json
+{
+  "deliveryId": "dlv_00000000-0000-0000-0000-000000000000",
+  "source": "screenshot-to-webhook-gateway",
+  "report": { "note": "Button overlaps the footer", "pageUrl": "https://example.com/settings", "tag": "Bug" },
+  "image": { "mimeType": "image/png", "fileName": "screenshot.png", "base64": "iVBORw0KGgo..." }
+}
+```
+
+`report` holds the fields from the table above, and `image` is `null` when the report has no screenshot. The gateway answers the extension with the `deliveryId` as `id`, so use it to recognize retries.

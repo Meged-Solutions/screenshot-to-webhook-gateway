@@ -13,8 +13,8 @@ describe('parseProvisionArgs', () => {
     expect(parseProvisionArgs(['--connector', 'airtable', '--ref', 'appAbCdEfGhIjKlMn'])).toEqual({ connector: 'airtable', mode: 'token', ref: 'appAbCdEfGhIjKlMn' })
   })
   it('requires a connector and names the available ones', () => {
-    expect(() => parseProvisionArgs(['--name', 'Acme'])).toThrow('--connector is required (available: airtable)')
-    expect(() => parseProvisionArgs(['--connector', 'nope', '--name', 'Acme'])).toThrow('Unknown connector "nope" (available: airtable)')
+    expect(() => parseProvisionArgs(['--name', 'Acme'])).toThrow('--connector is required (available: airtable, github, make, n8n, zapier)')
+    expect(() => parseProvisionArgs(['--connector', 'nope', '--name', 'Acme'])).toThrow('Unknown connector "nope" (available: airtable, github, make, n8n, zapier)')
   })
   it('takes exactly one action', () => {
     expect(() => parseProvisionArgs(['--connector', 'airtable'])).toThrow('one of --name, --ref, --list or --upgrade')
