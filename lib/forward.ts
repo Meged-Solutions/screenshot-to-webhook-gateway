@@ -12,8 +12,9 @@ import { DeliveryError, type Delivered, type Report } from '../connectors/types.
  *     "image": { "mimeType", "fileName", "base64" } | null
  *   }
  *
- * The returned id is the delivery id: webhooks rarely return a record id, and
- * the workflow can store this one to match retries.
+ * The returned id is the delivery id, which the extension shows as the
+ * report's id. It is a correlation id, new on every gateway call: a resent
+ * report gets a new one, so it cannot detect duplicates.
  */
 const TIMEOUT_MS = 25_000
 
@@ -21,7 +22,13 @@ export type ForwardOptions = { headers?: Record<string, string> }
 
 export async function forwardReport(url: string, report: Report, options: ForwardOptions = {}): Promise<Delivered> {
   const deliveryId = `dlv_${crypto.randomUUID()}`
-  const headers = new Headers(options.headers)
+  let headers: Headers
+  try {
+    headers = new Headers(options.headers)
+  } catch {
+    // Node's message for an invalid header value contains the value, which can be a secret.
+    throw new DeliveryError('Webhook request failed: invalid header')
+  }
   headers.set('Content-Type', 'application/json')
   headers.set('X-Delivery-Id', deliveryId)
   const body = JSON.stringify({
@@ -37,7 +44,8 @@ export async function forwardReport(url: string, report: Report, options: Forwar
   } catch (err) {
     throw new DeliveryError(`Webhook unreachable: ${(err as Error).name}`)
   }
+  // The body is never read; release the connection either way.
+  await res.body?.cancel().catch(() => {})
   if (!res.ok) throw new DeliveryError(`Webhook refused the report (${res.status})`)
-  await res.body?.cancel()
   return { id: deliveryId, skipped: [] }
 }

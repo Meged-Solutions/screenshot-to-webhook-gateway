@@ -57,4 +57,20 @@ describe('forwardReport', () => {
     })
     await expect(forwardReport('https://hooks.example.com/abc', { fields: {} })).rejects.toBeInstanceOf(DeliveryError)
   })
+
+  it('turns an invalid header value into a DeliveryError that never contains the value', async () => {
+    const fetch = vi.fn(async () => new Response('ok'))
+    vi.stubGlobal('fetch', fetch)
+    const err = await forwardReport('https://hooks.example.com/abc', { fields: {} }, { headers: { 'X-Webhook-Secret': 'abc\nSECRETVALUE' } }).catch((e: unknown) => e)
+    expect(err).toBeInstanceOf(DeliveryError)
+    expect((err as Error).message).not.toContain('SECRETVALUE')
+    expect(fetch).not.toHaveBeenCalled()
+  })
+
+  it('releases the response body when the webhook refuses the report', async () => {
+    const cancel = vi.fn(async () => {})
+    vi.stubGlobal('fetch', async () => ({ ok: false, status: 500, body: { cancel } }) as unknown as Response)
+    await expect(forwardReport('https://hooks.example.com/abc', { fields: {} })).rejects.toBeInstanceOf(DeliveryError)
+    expect(cancel).toHaveBeenCalled()
+  })
 })

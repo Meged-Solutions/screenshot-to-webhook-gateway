@@ -24,6 +24,7 @@ describe('n8n connector', () => {
     const [url, init] = call(fetch)
     expect(url).toBe(`https://n8n.example.com/webhook/${PATH}`)
     expect(init.method).toBe('POST')
+    expect(init.redirect).toBe('error')
     const body = JSON.parse(init.body as string)
     expect(body).toMatchObject({ source: 'screenshot-to-webhook-gateway', report: report.fields, image: null })
     expect(result).toEqual({ id: body.deliveryId, skipped: [] })
@@ -66,11 +67,32 @@ describe('n8n connector', () => {
     ['a fragment', 'https://n8n.example.com/#x'],
     ['credentials', 'https://user:pass@n8n.example.com'],
     ['the webhook path already in it', 'https://n8n.example.com/webhook'],
+    ['the webhook path in another case', 'https://n8n.example.com/WEBHOOK'],
+    ['a full webhook URL', 'https://n8n.example.com/webhook/abc'],
+    ['the test webhook path', 'https://n8n.example.com/n8n/Webhook-Test/abc/'],
   ])('throws ConfigError, before any network call, when N8N_BASE_URL is %s', async (_, value) => {
     const fetch = stubFetch()
     const env = value === undefined ? {} : { N8N_BASE_URL: value }
     await expect(n8n.deliver(report, PATH, env)).rejects.toBeInstanceOf(ConfigError)
     expect(fetch).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    ['a newline inside', 'abc\ndef'],
+    ['a space inside', 'abc def'],
+    ['non-ASCII characters', 'p\u00e4ss'],
+  ])('throws ConfigError, before any network call and without the value, when N8N_WEBHOOK_SECRET has %s', async (_, secret) => {
+    const fetch = stubFetch()
+    const err = await n8n.deliver(report, PATH, { N8N_BASE_URL: 'https://n8n.example.com', N8N_WEBHOOK_SECRET: secret }).catch((e: unknown) => e)
+    expect(err).toBeInstanceOf(ConfigError)
+    expect((err as Error).message).toBe('Invalid N8N_WEBHOOK_SECRET')
+    expect(fetch).not.toHaveBeenCalled()
+  })
+
+  it('accepts a secret with printable ASCII punctuation', async () => {
+    const fetch = stubFetch()
+    await n8n.deliver(report, PATH, { N8N_BASE_URL: 'https://n8n.example.com', N8N_WEBHOOK_SECRET: 'a!b#c$d%e~f' })
+    expect(new Headers(call(fetch)[1].headers).get('X-Webhook-Secret')).toBe('a!b#c$d%e~f')
   })
 
   it('does not leak the base URL value into the ConfigError message', async () => {

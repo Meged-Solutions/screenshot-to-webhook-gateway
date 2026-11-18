@@ -8,7 +8,7 @@ No env vars and no provisioner: you build the scenario in Make, then issue a tok
 
 1. In Make, create a scenario and add **Webhooks > Custom webhook** as its trigger. Add a webhook and copy its address. It looks like `https://hook.eu1.make.com/abcdefghij0123456789klmnopqrstuv`.
 2. Build the ref from the address: the zone (the part after `hook.`) and the token (the 32 characters after the last `/`), joined by `_`. For the address above the ref is `eu1_abcdefghij0123456789klmnopqrstuv`.
-3. Issue a bearer token for the extension, in your own terminal:
+3. Issue a bearer token for the extension after the gateway is deployed and `WEBHOOK_URL` is set in `.env.local` (see the root README), in your own terminal (the token is printed once, so keep it out of AI chats):
 
    ```sh
    npm run provision -- --connector make --ref eu1_abcdefghij0123456789klmnopqrstuv
@@ -41,7 +41,7 @@ Every forwarding connector sends the same shape, defined in [lib/forward.ts](../
 
 - `report` holds the report fields described in [docs/payload.md](../../docs/payload.md).
 - `image` is `null` when the report has no screenshot. To attach it in Make, map `image.base64` through the `toBinary(...; base64)` function into a file field.
-- `deliveryId` is also sent in the `X-Delivery-Id` header and is the id the gateway returns to the extension. Store it if you want to spot retries.
+- `deliveryId` is also sent in the `X-Delivery-Id` header and is the id the gateway returns to the extension. It is a correlation id, new on every gateway call, so a resent report gets a new one; to drop duplicates, compare `capturedAt`, `reporter` and `pageUrl`.
 
 ## Responses
 

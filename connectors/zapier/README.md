@@ -11,7 +11,7 @@ Each destination is one Zapier "Catch Hook" (the Webhooks by Zapier trigger). Th
 }
 ```
 
-`image` is `null` when the report has no screenshot. The delivery id is also sent in the `X-Delivery-Id` header, so a Zap can use it to spot retries. Report fields are listed in [docs/payload.md](../../docs/payload.md).
+`image` is `null` when the report has no screenshot. The delivery id is also sent in the `X-Delivery-Id` header, and is the id the extension shows. It is a correlation id, new on every gateway call, so a resent report gets a new one; to drop duplicates, compare `capturedAt`, `reporter` and `pageUrl`. Report fields are listed in [docs/payload.md](../../docs/payload.md).
 
 ## Credentials
 
@@ -21,7 +21,7 @@ None. The connector needs no env vars: the hook URL is the only secret, and it t
 
 1. In Zapier, create a Zap with the trigger **Webhooks by Zapier > Catch Hook** and copy the webhook URL. It looks like `https://hooks.zapier.com/hooks/catch/1234567/abcdefg/`.
 2. Take the two ids from the URL: the number after `/catch/` (your Zapier account id) and the code after it (the hook id). Join them with an underscore: `1234567_abcdefg`.
-3. Issue a token in your own terminal:
+3. Issue a token after the gateway is deployed and `WEBHOOK_URL` is set in `.env.local` (see the root README), in your own terminal (the token is printed once, so keep it out of AI chats):
 
    ```sh
    npm run provision -- --connector zapier --ref 1234567_abcdefg

@@ -19,6 +19,12 @@ const PATH = /^[A-Za-z0-9_-]{1,128}$/
 /** Plain http is only for a local n8n reached from `vercel dev`. */
 const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]'])
 
+/** Visible ASCII only, so building the header can never throw an error that quotes the secret. */
+const SECRET = /^[\x21-\x7E]+$/
+
+/** n8n's production and test webhook prefixes, which belong after the base URL, not in it. */
+const WEBHOOK_SEGMENT = /^webhook(-test)?$/i
+
 /** The validated base URL without a trailing slash. Never echoes the value: it may hold credentials. */
 function baseUrl(env: NodeJS.ProcessEnv): string {
   const raw = requireEnv(env, 'N8N_BASE_URL')
@@ -35,7 +41,7 @@ function baseUrl(env: NodeJS.ProcessEnv): string {
   if (url.username || url.password) throw invalid('remove the credentials')
   if (raw.includes('?') || raw.includes('#')) throw invalid('remove the query string or fragment')
   const path = url.pathname.replace(/\/+$/, '')
-  if (/\/webhook(-test)?$/.test(path)) throw invalid('use the instance URL, without /webhook')
+  if (path.split('/').some((segment) => WEBHOOK_SEGMENT.test(segment))) throw invalid('use the instance URL, without /webhook')
   return `${url.origin}${path}`
 }
 
@@ -54,7 +60,7 @@ export const n8n: Connector = {
       sensitive: true,
       scope: 'gateway',
       optional: true,
-      description: `Optional: sent as the ${SECRET_HEADER} header; require it with Header Auth on the Webhook node`,
+      description: `Optional, recommended: visible ASCII, no spaces. Sent as the ${SECRET_HEADER} header; require it with Header Auth on the Webhook node`,
     },
   ],
 
@@ -63,6 +69,7 @@ export const n8n: Connector = {
   async deliver(report, ref, env) {
     const url = `${baseUrl(env)}/${WEBHOOK_ENDPOINT}/${encodeURIComponent(ref)}`
     const secret = env.N8N_WEBHOOK_SECRET?.trim()
+    if (secret && !SECRET.test(secret)) throw new ConfigError('Invalid N8N_WEBHOOK_SECRET')
     return forwardReport(url, report, { headers: secret ? { [SECRET_HEADER]: secret } : {} })
   },
 }

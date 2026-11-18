@@ -7,7 +7,7 @@
  */
 
 /** Zero-width space: GitHub stops reading a mention, reference or autolink at it. */
-const ZW = '​'
+const ZW = '\u200B'
 
 /** GitHub's limit for an issue title. */
 const MAX_TITLE = 256
@@ -17,7 +17,7 @@ const MAX_PINS = 4_000
 const MAX_LINE = 300
 
 /** Control characters other than newline and tab, plus bidi overrides that can disguise text. */
-const UNSAFE_CHARS = /[\u0000-\u0008\u000B-\u001F\u007F-\u009F؜‎‏‪-‮⁦-⁩]/g
+const UNSAFE_CHARS = /[\u0000-\u0008\u000B-\u001F\u007F-\u009F\u061C\u200E\u200F\u202A-\u202E\u2066-\u2069]/g
 
 /** Characters that start Markdown or HTML structure; each is backslash-escaped. */
 const MARKDOWN_CHARS = /[\\`*_{}[\]()<>#+\-.!|~&=$]/g

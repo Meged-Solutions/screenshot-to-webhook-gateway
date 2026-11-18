@@ -43,13 +43,13 @@ The extension lets users add custom headers. A header named `reporter` fills `re
 
 | Status | Body |
 | --- | --- |
-| 200 | `{ "ok": true, "id": "<record id>" }`, plus `"skipped": [<field names>]` when the destination refused some fields |
+| 200 | `{ "ok": true, "id": "<id>" }`, plus `"skipped": [<field names>]` when the destination left some out. The id is the Airtable record id (`rec...`), the GitHub issue number (`#12`), or the delivery id (`dlv_...`) for n8n, Make and Zapier |
 | 400 | Malformed body or unsupported Content-Type |
 | 401 | Missing, invalid or revoked token |
 | 500 | The gateway or the token's connector is missing env vars |
 | 502 | The destination refused the report. `id` is included when part of it was saved |
 
-A report never fails over its content. Each value is fitted to its column, and a field the destination refuses is skipped and listed in `skipped`.
+Airtable never fails a report over its content: each value is fitted to its column, and a field the base refuses is skipped and listed in `skipped`. GitHub lists `tag` (no matching label) and `image` (no attachment API) in `skipped`. n8n, Make and Zapier forward everything as is.
 
 ## Example
 
@@ -74,4 +74,4 @@ The n8n, Make and Zapier connectors forward each report to your workflow as this
 }
 ```
 
-`report` holds the fields from the table above, and `image` is `null` when the report has no screenshot. The gateway answers the extension with the `deliveryId` as `id`, so use it to recognize retries.
+`report` holds the fields from the table above, and `image` is `null` when the report has no screenshot. The gateway answers the extension with the `deliveryId` as `id`. It is a correlation id, new on every gateway call, so a resent report gets a new one; to drop duplicates, compare `capturedAt`, `reporter` and `pageUrl`.

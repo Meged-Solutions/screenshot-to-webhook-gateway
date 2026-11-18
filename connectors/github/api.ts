@@ -11,6 +11,18 @@ export const headers = (token: string): Record<string, string> => ({
   'User-Agent': 'screenshot-to-webhook-gateway',
 })
 
+/** Every GitHub call gives up after this long. */
+const TIMEOUT_MS = 15_000
+
+/** A GitHub API call with the recommended headers, a timeout, and no redirects followed. */
+export const gh = (token: string, path: string, init: RequestInit = {}) =>
+  fetch(`${API}${path}`, {
+    ...init,
+    headers: { ...headers(token), ...(init.headers as Record<string, string> | undefined) },
+    signal: AbortSignal.timeout(TIMEOUT_MS),
+    redirect: 'error',
+  })
+
 /** A repository's numeric id, as stored in the token's ref. */
 export const REPO_ID = /^[1-9][0-9]{0,19}$/
 /** GitHub's owner (user or organization) and repository name rules. */

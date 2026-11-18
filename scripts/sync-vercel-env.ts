@@ -14,7 +14,8 @@ const TARGET = 'production'
 /** Vars the deployed gateway reads: the core ones plus every connector's gateway vars. Secrets are stored as Vercel Sensitive vars. */
 const GATEWAY_VARS = [
   { name: 'WEBHOOK_SIGNING_SECRET', sensitive: true },
-  { name: 'REVOKED_TOKEN_IDS', sensitive: false },
+  // Sensitive: revoked ids of webhook connectors (Zapier, Make, n8n) contain the hook id.
+  { name: 'REVOKED_TOKEN_IDS', sensitive: true },
   ...CONNECTORS.flatMap((c) => c.env.filter((v) => v.scope === 'gateway')),
 ]
 
