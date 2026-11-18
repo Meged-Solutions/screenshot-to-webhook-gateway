@@ -6,6 +6,8 @@ Your own backend for the free [Screenshot to Webhook - Annotate & Send](https://
 extension  ──POST + Bearer token──▶  gateway (Vercel)  ──▶  connector  ──▶  Airtable, or yours
 ```
 
+![The extension's editor: arrows, ellipses, numbered pins and a note, sent with one click](docs/images/extension-annotate.png)
+
 - **One deployment, many destinations.** Each destination (an Airtable base per client, for example) gets its own signed token. A token can't be edited to reach another destination, and you can revoke any token on its own.
 - **Connectors.** Airtable is built in. Add more by implementing one small interface: [contributions welcome](#contribute-a-connector).
 - **No database and no UI.** Just a Vercel function and your own accounts.
@@ -53,6 +55,12 @@ You need Node 24, a [Vercel](https://vercel.com) account (the free plan is enoug
    ```
    This creates an "Acme - Feedback" base with a ready Tickets table and prints the webhook URL and a bearer token. The token is not stored anywhere, so copy it now.
 5. **Connect the extension:** in its settings, choose auth type Bearer and paste the URL and token. Send a screenshot, and a ticket appears in the base.
+
+   ![The extension's settings: a destination with the webhook URL and a Bearer token](docs/images/extension-settings.png)
+
+   Reporters can pixelate private data before sending. Nothing leaves the browser until they press Send:
+
+   ![Redacting part of a screenshot in the extension before sending](docs/images/extension-redact.png)
 
 Running provision again with the same name reuses the base, adds any missing fields, and issues a new token. Other commands:
 
